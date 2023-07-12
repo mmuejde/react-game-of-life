@@ -6,30 +6,31 @@ import { Toaster, toast } from 'react-hot-toast';
 const COL_SIZE = 40;
 const ROW_SIZE = 25;
 
-const operations = [
+const neighboursOps = [
+  [-1, 1],
+  [-1, 0],
+  [-1, -1],
+
   [0, 1],
   [0, -1],
-  [1, -1],
-  [-1, 1],
+
   [1, 1],
-  [-1, -1],
   [1, 0],
-  [-1, 0],
+  [1, -1],
 ];
 
+const getBlankGrid = () => {
+  let rows = [];
+  for (let i = 0; i < ROW_SIZE; i++) {
+    rows.push(Array.from(Array(COL_SIZE), () => 0));
+  }
+  return rows;
+};
+
 const App = () => {
+  const [grid, setGrid] = useState(getBlankGrid);
   const [isRunning, setIsRunning] = useState(false);
   const [generation, setGeneration] = useState(0);
-
-  const getBlankGrid = () => {
-    let rows = [];
-    for (let i = 0; i < ROW_SIZE; i++) {
-      rows.push(Array.from(Array(COL_SIZE), () => 0));
-    }
-    return rows;
-  };
-
-  const [grid, setGrid] = useState(getBlankGrid);
 
   const runningRef = useRef(isRunning);
   runningRef.current = isRunning;
@@ -42,29 +43,32 @@ const App = () => {
       return;
     }
 
-    setGrid((g) => {
-      return produce(g, (gridCopy) => {
+    setGrid((grid) => {
+      return produce(grid, (gridCopy) => {
         for (let i = 0; i < ROW_SIZE; i++) {
           for (let k = 0; k < COL_SIZE; k++) {
-            let neighbors = 0;
+            let neighbourCount = 0;
 
-            operations.forEach(([x, y]) => {
-              const newI = i + x;
-              const newK = k + y;
+            neighboursOps.forEach(([x, y]) => {
+              const neighbourXPosition = i + x;
+              const neighbourYPosition = k + y;
 
               if (
-                newI >= 0 &&
-                newI < ROW_SIZE &&
-                newK >= 0 &&
-                newK < COL_SIZE
+                neighbourXPosition >= 0 &&
+                neighbourXPosition < ROW_SIZE &&
+                neighbourYPosition >= 0 &&
+                neighbourYPosition < COL_SIZE
               ) {
-                neighbors += g[newI][newK];
+                neighbourCount += grid[neighbourXPosition][neighbourYPosition];
               }
             });
 
-            if (neighbors < 2 || neighbors > 3) {
+            if (neighbourCount < 2 || neighbourCount > 3) {
+              // Any live cell with two or three live neighbours survives
+              // All other live cells die in the next generation. Similarly, all other dead cells stay dead
               gridCopy[i][k] = 0;
-            } else if (g[i][k] === 0 && neighbors === 3) {
+            } else if (grid[i][k] === 0 && neighbourCount === 3) {
+              // Any dead cell with three live neighbours becomes a live cell
               gridCopy[i][k] = 1;
             }
           }
@@ -78,7 +82,7 @@ const App = () => {
   }, []);
 
   const startHandler = () => {
-    if (checkGameField()) {
+    if (!isRunning && checkGameField()) {
       toast.error('Game field is empty! Please, fill it with cells.', {
         id: 'empty',
       });
