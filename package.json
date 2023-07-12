@@ -1,6 +1,9 @@
 {
   "name": "game-of-life",
-  "author": "Mehmet Müjde",
+  "author": {
+    "name": "Mehmet Müjde",
+    "email": "freelancer@mehmetmuejde.com"
+  },
   "version": "1.0.0",
   "private": true,
   "dependencies": {
